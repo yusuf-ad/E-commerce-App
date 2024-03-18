@@ -12,7 +12,7 @@ Axios is a JavaScript library used for making HTTP requests. It is promise-based
 
 React Bootstrap is the React version of Bootstrap. It allows for the quick and easy creation of responsive, mobile-first projects.
 
-## Global State Management: Redux
+## Remote State Management: Redux
 
 Redux is a predictable state container for JavaScript applications. Redux provides a centralized store to manage and decouple concerns related to state management in your application.
 
