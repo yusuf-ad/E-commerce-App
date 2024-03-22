@@ -1,8 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import productRouter from "./routes/productRouter.js";
 import connectDB from "./config/db.js";
+
+import productRouter from "./routes/productRoutes.js";
+import userRouter from "./routes/userRoutes.js";
+
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 const PORT = process.env.PORT || 8000;
@@ -15,6 +18,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/products", productRouter);
+app.use("/api/users", userRouter);
 
 app.listen(PORT, () => {
   console.log("Server started at port " + PORT);
