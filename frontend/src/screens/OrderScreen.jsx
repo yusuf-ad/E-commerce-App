@@ -1,8 +1,20 @@
 import { Link, useParams } from "react-router-dom";
-import { Card, Col, ListGroup, Row } from "react-bootstrap";
+import { Button, Card, Col, ListGroup, Row } from "react-bootstrap";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
-import { useGetOrderDetailsQuery } from "../slices/ordersApiSlice";
+import {
+  useGetCheckoutSessionMutation,
+  useGetOrderDetailsQuery,
+  usePayOrderMutation,
+} from "../slices/ordersApiSlice";
+import { toast } from "react-toastify";
+import { loadStripe } from "@stripe/stripe-js";
+import axios from "axios";
+import { useEffect } from "react";
+
+const stripePromise = loadStripe(
+  "pk_test_51P4y50HPVRJk3r2Z56KHWCHxE7Lemxti5iCVU45JnJRPtINoB5LT4hdHrSSavuijoviMigfdpCztxyynxnAqhSua00xJq1Naxp"
+);
 
 function OrderScreen() {
   const { id: orderId } = useParams();
@@ -14,7 +26,38 @@ function OrderScreen() {
     refetch,
   } = useGetOrderDetailsQuery(orderId);
 
-  console.log(order);
+  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+  const [getCheckoutSession] = useGetCheckoutSessionMutation();
+
+  async function handleOrder() {
+    // 1) Get checkout session from API
+    const session = await axios(`/api/orders/checkout-session/${orderId}`);
+
+    console.log(session);
+
+    // 2) Create checkout form + charge credit card
+    const stripe = await stripePromise;
+    const { error } = await stripe.redirectToCheckout({
+      sessionId: session.data.session.id,
+    });
+
+    if (error) {
+      toast.error(`Payment failed: ${error.message}`);
+    }
+  }
+
+  useEffect(() => {
+    function handleSuccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentSuccess = urlParams.get("success");
+
+      if (paymentSuccess) {
+        payOrder(orderId);
+      }
+    }
+
+    handleSuccess();
+  }, [orderId, payOrder]);
 
   return isLoading ? (
     <Loader />
@@ -118,6 +161,29 @@ function OrderScreen() {
                   <Col>${order.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
+              {/* PAY ORDER PLACEHOLDER */}
+              {!order.isPaid && (
+                <ListGroup.Item>
+                  <div>
+                    <Button type="button" className="btn btn-block">
+                      Test Pay Order
+                    </Button>
+
+                    <div className="mt-3">
+                      <Button
+                        onClick={handleOrder}
+                        variant="success"
+                        type="button "
+                        className="btn py-3 w-100 text-white"
+                      >
+                        Pay with Stripe
+                      </Button>
+                    </div>
+                  </div>
+                </ListGroup.Item>
+              )}
+
+              {/* MARK AS DELIVERED PLACEHOLDER */}
             </ListGroup>
           </Card>
         </Col>

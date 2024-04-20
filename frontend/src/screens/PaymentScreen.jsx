@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { savePaymentMethod } from "../slices/cartSlice";
 
 function PaymentScreen() {
-  const [paymentMethod, setPaymentMethod] = useState("PayPal");
+  const [paymentMethod, setPaymentMethod] = useState("Stripe");
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -39,26 +39,28 @@ function PaymentScreen() {
           <Form.Label as="legend">Select Method</Form.Label>
           <Col>
             <Form.Check
+              className="mb-1"
+              type="radio"
+              label="Stripe"
+              id="Stripe"
+              checked
+              name="paymentMethod"
+              value="Stripe"
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            ></Form.Check>
+            <Form.Check
               type="radio"
               label="PayPal or Credit Card"
               id="PayPal"
               name="paymentMethod"
               value="PayPal"
-              checked
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            ></Form.Check>
-            <Form.Check
-              type="radio"
-              label="Stripe"
-              id="Stripe"
-              name="paymentMethod"
-              value="Stripe"
+              disabled
               onChange={(e) => setPaymentMethod(e.target.value)}
             ></Form.Check>
           </Col>
         </Form.Group>
 
-        <Button type="submit" variant="primary">
+        <Button className="mt-3" type="submit" variant="primary">
           Continue
         </Button>
       </Form>

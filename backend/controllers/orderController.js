@@ -1,5 +1,6 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Order from "../models/orderModel.js";
+import Stripe from "stripe";
 
 // @desc    Create new order
 // @route   POST /api/order
@@ -68,15 +69,72 @@ export const getOrderById = asyncHandler(async (req, res) => {
   }
 });
 
+export const getCheckoutSession = asyncHandler(async (req, res) => {
+  // 1) get the current order
+  const order = await Order.findById(req.params.orderId);
+
+  const { orderItems } = order;
+
+  // 2) create a new Stripe checkout session
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const session = await stripe.checkout.sessions.create({
+    line_items: orderItems.map((item) => ({
+      quantity: item.qty,
+      price_data: {
+        currency: "usd",
+        unit_amount: item.price * 100,
+        product_data: {
+          name: item.name,
+          images: ["https://picsum.photos/300/400"],
+        },
+      },
+    })),
+    customer_email: req.user.email,
+
+    client_reference_id: req.params.orderId,
+    success_url: `${process.env.BASE_URL}/order/${order._id}/?success=true`,
+    cancel_url: `${process.env.BASE_URL}/order/${order._id}/?canceled=true`,
+
+    mode: "payment",
+  });
+
+  res.status(200).json({
+    status: "success",
+    session,
+  });
+});
+
 // @desc    Update order to paid
-// @route   GET /api/orders/:id/pay
+// @route   PUT /api/orders/:id/pay
 // @access  Private
-export const updateOrderToPaid = asyncHandler(async (req, res) => {
-  res.send("update order to paid");
+export const updateOrderToPaid = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.orderId);
+
+  if (order) {
+    // check the correct amount was paid
+    const paidCorrectAmount = order.totalPrice.toString() === value;
+    if (!paidCorrectAmount) throw new Error("Incorrect amount paid");
+
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    // order.paymentResult = {
+    //   id: req.body.id,
+    //   status: req.body.status,
+    //   update_time: req.body.update_time,
+    //   email_address: req.body.payer.email_address,
+    // };
+
+    const updatedOrder = await order.save();
+
+    res.status(200).json(updatedOrder);
+  } else {
+    res.status(404);
+    throw new Error("Order not found");
+  }
 });
 
 // @desc    Update order to delivered
-// @route   GET /api/orders/:id/deliver
+// @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 export const updateOrderToDelivered = asyncHandler(async (req, res) => {
   res.send("update order to paid");
