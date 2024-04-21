@@ -22,12 +22,7 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
         body: { ...order },
       }),
     }),
-    getCheckoutSession: builder.mutation({
-      query: (orderId) => ({
-        url: `${ORDERS_URL}/checkout-session/${orderId}`,
-        method: "GET",
-      }),
-    }),
+
     payOrder: builder.mutation({
       query: (orderId) => ({
         url: `/api/orders/${orderId}/pay`,
@@ -54,7 +49,6 @@ export const {
   useCreateOrderMutation,
   useGetOrderDetailsQuery,
   usePayOrderMutation,
-  useGetCheckoutSessionMutation,
 } = ordersApiSlice;
 
 // add  payOrder endpoint

@@ -98,6 +98,8 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
     mode: "payment",
   });
 
+  console.log(session);
+
   res.status(200).json({
     status: "success",
     session,

@@ -3,14 +3,12 @@ import { Button, Card, Col, ListGroup, Row } from "react-bootstrap";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
-  useGetCheckoutSessionMutation,
   useGetOrderDetailsQuery,
   usePayOrderMutation,
 } from "../slices/ordersApiSlice";
 import { toast } from "react-toastify";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
-import { useEffect } from "react";
 
 const stripePromise = loadStripe(
   "pk_test_51P4y50HPVRJk3r2Z56KHWCHxE7Lemxti5iCVU45JnJRPtINoB5LT4hdHrSSavuijoviMigfdpCztxyynxnAqhSua00xJq1Naxp"
@@ -27,37 +25,36 @@ function OrderScreen() {
   } = useGetOrderDetailsQuery(orderId);
 
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
-  const [getCheckoutSession] = useGetCheckoutSessionMutation();
 
-  async function handleOrder() {
+  async function handlePayment() {
     // 1) Get checkout session from API
     const session = await axios(`/api/orders/checkout-session/${orderId}`);
 
     console.log(session);
 
     // 2) Create checkout form + charge credit card
-    const stripe = await stripePromise;
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: session.data.session.id,
-    });
+    // const stripe = await stripePromise;
+    // const { error } = await stripe.redirectToCheckout({
+    //   sessionId: session.data.session.id,
+    // });
 
     if (error) {
       toast.error(`Payment failed: ${error.message}`);
     }
   }
 
-  useEffect(() => {
-    function handleSuccess() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const paymentSuccess = urlParams.get("success");
+  // useEffect(() => {
+  //   function handleSuccess() {
+  //     const urlParams = new URLSearchParams(window.location.search);
+  //     const paymentSuccess = urlParams.get("success");
 
-      if (paymentSuccess) {
-        payOrder(orderId);
-      }
-    }
+  //     if (paymentSuccess) {
+  //       payOrder(orderId);
+  //     }
+  //   }
 
-    handleSuccess();
-  }, [orderId, payOrder]);
+  //   handleSuccess();
+  // }, [orderId, payOrder]);
 
   return isLoading ? (
     <Loader />
@@ -171,7 +168,7 @@ function OrderScreen() {
 
                     <div className="mt-3">
                       <Button
-                        onClick={handleOrder}
+                        onClick={handlePayment}
                         variant="success"
                         type="button "
                         className="btn py-3 w-100 text-white"
