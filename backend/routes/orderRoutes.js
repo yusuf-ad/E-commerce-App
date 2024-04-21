@@ -7,6 +7,7 @@ import {
   updateOrderToDelivered,
   updateOrderToPaid,
   getCheckoutSession,
+  checkPaymentSession,
 } from "../controllers/orderController.js";
 
 import { protect, admin } from "../middleware/authMiddleware.js";
@@ -17,10 +18,13 @@ router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);
 
 router.route("/myorders").get(protect, getMyOrders);
 
-router.get("/checkout-session/:orderId", protect, getCheckoutSession);
+router.get("/create-checkout-session/:orderId", protect, getCheckoutSession);
+router.get("/check-payment/:orderId", protect, checkPaymentSession);
 
 router.route("/:id").get(protect, getOrderById);
+
 router.route("/:id/pay").put(protect, updateOrderToPaid);
+
 router.route("/:id/deliver").put(protect, admin, updateOrderToDelivered);
 
 export default router;

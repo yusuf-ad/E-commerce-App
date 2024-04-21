@@ -1,6 +1,8 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Order from "../models/orderModel.js";
+
 import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // @desc    Create new order
 // @route   POST /api/order
@@ -47,7 +49,9 @@ export const addOrderItems = asyncHandler(async (req, res) => {
 // @route   GET /api/order/myorders
 // @access  Private
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
+  const orders = await Order.find({ user: req.user._id }).select(
+    "-__v sessionId"
+  );
 
   res.status(200).json(orders);
 });
@@ -73,12 +77,11 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
   // 1) get the current order
   const order = await Order.findById(req.params.orderId);
 
-  const { orderItems } = order;
-
   // 2) create a new Stripe checkout session
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
   const session = await stripe.checkout.sessions.create({
-    line_items: orderItems.map((item) => ({
+    line_items: order.orderItems.map((item) => ({
       quantity: item.qty,
       price_data: {
         currency: "usd",
@@ -98,7 +101,10 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
     mode: "payment",
   });
 
-  console.log(session);
+  // 3) store the Checkout Session ID in the Order model
+  order.sessionId = session.id;
+
+  await order.save();
 
   res.status(200).json({
     status: "success",
@@ -106,17 +112,28 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
   });
 });
 
+export const checkPaymentSession = asyncHandler(async (req, res) => {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+  const order = await Order.findById(req.params.orderId);
+
+  if (order) {
+    const session = await stripe.checkout.sessions.retrieve(order.sessionId);
+
+    res.json(session);
+  } else {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+});
+
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 export const updateOrderToPaid = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.orderId);
+  const order = await Order.findById(req.params.id);
 
   if (order) {
-    // check the correct amount was paid
-    const paidCorrectAmount = order.totalPrice.toString() === value;
-    if (!paidCorrectAmount) throw new Error("Incorrect amount paid");
-
     order.isPaid = true;
     order.paidAt = Date.now();
     // order.paymentResult = {

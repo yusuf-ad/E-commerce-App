@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { Button, Card, Col, ListGroup, Row } from "react-bootstrap";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
@@ -9,6 +9,7 @@ import {
 import { toast } from "react-toastify";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
+import { useEffect } from "react";
 
 const stripePromise = loadStripe(
   "pk_test_51P4y50HPVRJk3r2Z56KHWCHxE7Lemxti5iCVU45JnJRPtINoB5LT4hdHrSSavuijoviMigfdpCztxyynxnAqhSua00xJq1Naxp"
@@ -27,34 +28,51 @@ function OrderScreen() {
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
 
   async function handlePayment() {
-    // 1) Get checkout session from API
-    const session = await axios(`/api/orders/checkout-session/${orderId}`);
+    try {
+      const session = await axios(
+        `/api/orders/create-checkout-session/${orderId}`
+      );
 
-    console.log(session);
+      const stripe = await stripePromise;
 
-    // 2) Create checkout form + charge credit card
-    // const stripe = await stripePromise;
-    // const { error } = await stripe.redirectToCheckout({
-    //   sessionId: session.data.session.id,
-    // });
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: session.data.session.id,
+      });
 
-    if (error) {
-      toast.error(`Payment failed: ${error.message}`);
+      if (error) {
+        console.log(error);
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
-  // useEffect(() => {
-  //   function handleSuccess() {
-  //     const urlParams = new URLSearchParams(window.location.search);
-  //     const paymentSuccess = urlParams.get("success");
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
 
-  //     if (paymentSuccess) {
-  //       payOrder(orderId);
-  //     }
-  //   }
+    async function handleSuccess() {
+      try {
+        const { data: session } = await axios(
+          `/api/orders/check-payment/${orderId}`
+        );
 
-  //   handleSuccess();
-  // }, [orderId, payOrder]);
+        if (session.payment_status === "paid") {
+          await payOrder(orderId);
+
+          toast.success("Payment successful");
+        }
+      } catch (error) {
+        console.log("shalom");
+        console.log(error);
+      }
+    }
+
+    if (queryParams.get("success") === "true") {
+      handleSuccess();
+    } else if (queryParams.get("canceled") === "true") {
+      toast.error("Payment canceled");
+    }
+  }, [orderId, payOrder]);
 
   return isLoading ? (
     <Loader />

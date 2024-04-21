@@ -22,11 +22,11 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
         body: { ...order },
       }),
     }),
-
     payOrder: builder.mutation({
       query: (orderId) => ({
         url: `/api/orders/${orderId}/pay`,
         method: "PUT",
+        body: {},
       }),
     }),
     updateOrder: builder.mutation({
