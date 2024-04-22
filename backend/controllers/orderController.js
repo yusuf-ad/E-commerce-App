@@ -75,7 +75,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
 
 export const getCheckoutSession = asyncHandler(async (req, res) => {
   // 1) get the current order
-  const order = await Order.findById(req.params.orderId);
+  const order = await Order.findById(req.params.id);
 
   // 2) create a new Stripe checkout session
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -94,9 +94,9 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
     })),
     customer_email: req.user.email,
 
-    client_reference_id: req.params.orderId,
-    success_url: `${process.env.BASE_URL}/order/${order._id}/?success=true`,
-    cancel_url: `${process.env.BASE_URL}/order/${order._id}/?canceled=true`,
+    client_reference_id: req.params.id,
+    success_url: `${process.env.API_URL}/order/${order._id}/?success=true`,
+    cancel_url: `${process.env.API_URL}/order/${order._id}/?canceled=true`,
 
     mode: "payment",
   });
@@ -112,15 +112,23 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
   });
 });
 
-export const checkPaymentSession = asyncHandler(async (req, res) => {
+export const checkPaymentSession = asyncHandler(async (req, res, next) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const order = await Order.findById(req.params.orderId);
+  const order = await Order.findById(req.params.id);
 
   if (order) {
     const session = await stripe.checkout.sessions.retrieve(order.sessionId);
 
-    res.json(session);
+    console.log("session\n", session, "session\n");
+
+    if (session.payment_status === "paid") {
+      req.order = order;
+      next();
+    } else {
+      res.status(400);
+      throw new Error("Payment not completed");
+    }
   } else {
     res.status(404);
     throw new Error("Order not found");
@@ -131,25 +139,14 @@ export const checkPaymentSession = asyncHandler(async (req, res) => {
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 export const updateOrderToPaid = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id);
+  const order = req.order;
 
-  if (order) {
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    // order.paymentResult = {
-    //   id: req.body.id,
-    //   status: req.body.status,
-    //   update_time: req.body.update_time,
-    //   email_address: req.body.payer.email_address,
-    // };
+  order.isPaid = true;
+  order.paidAt = Date.now();
 
-    const updatedOrder = await order.save();
+  const updatedOrder = await order.save();
 
-    res.status(200).json(updatedOrder);
-  } else {
-    res.status(404);
-    throw new Error("Order not found");
-  }
+  res.status(200).json(updatedOrder);
 });
 
 // @desc    Update order to delivered

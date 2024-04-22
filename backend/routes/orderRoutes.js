@@ -18,12 +18,11 @@ router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);
 
 router.route("/myorders").get(protect, getMyOrders);
 
-router.get("/create-checkout-session/:orderId", protect, getCheckoutSession);
-router.get("/check-payment/:orderId", protect, checkPaymentSession);
+router.get("/create-checkout-session/:id", protect, getCheckoutSession);
 
 router.route("/:id").get(protect, getOrderById);
 
-router.route("/:id/pay").put(protect, updateOrderToPaid);
+router.route("/:id/pay").put(protect, checkPaymentSession, updateOrderToPaid);
 
 router.route("/:id/deliver").put(protect, admin, updateOrderToDelivered);
 

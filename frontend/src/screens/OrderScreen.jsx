@@ -50,29 +50,18 @@ function OrderScreen() {
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
 
-    async function handleSuccess() {
-      try {
-        const { data: session } = await axios(
-          `/api/orders/check-payment/${orderId}`
-        );
+    if (queryParams.get("success") === "true" && order?.isPaid === "true") {
+      console.log(order?.isPaid);
+      payOrder(orderId);
 
-        if (session.payment_status === "paid") {
-          await payOrder(orderId);
-
-          toast.success("Payment successful");
-        }
-      } catch (error) {
-        console.log("shalom");
-        console.log(error);
-      }
-    }
-
-    if (queryParams.get("success") === "true") {
-      handleSuccess();
-    } else if (queryParams.get("canceled") === "true") {
+      toast.success("Payment successful");
+    } else if (
+      queryParams.get("canceled") === "true" &&
+      order?.isPaid !== true
+    ) {
       toast.error("Payment canceled");
     }
-  }, [orderId, payOrder]);
+  }, [orderId, payOrder, order?.isPaid]);
 
   return isLoading ? (
     <Loader />
@@ -179,6 +168,8 @@ function OrderScreen() {
               {/* PAY ORDER PLACEHOLDER */}
               {!order.isPaid && (
                 <ListGroup.Item>
+                  {loadingPay && <Loader />}
+
                   <div>
                     <Button type="button" className="btn btn-block">
                       Test Pay Order
