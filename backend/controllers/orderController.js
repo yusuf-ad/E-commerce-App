@@ -149,6 +149,18 @@ export const updateOrderToPaid = asyncHandler(async (req, res, next) => {
   res.status(200).json(updatedOrder);
 });
 
+// test pay order
+export const testPayOrder = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id);
+
+  order.isPaid = true;
+  order.paidAt = Date.now();
+
+  const updatedOrder = await order.save();
+
+  res.status(200).json(updatedOrder);
+});
+
 // @desc    Update order to delivered
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin

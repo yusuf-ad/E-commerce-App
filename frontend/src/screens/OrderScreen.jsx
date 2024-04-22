@@ -1,17 +1,17 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Link, useParams } from "react-router-dom";
 import { Button, Card, Col, ListGroup, Row } from "react-bootstrap";
-import Message from "../components/Message";
-import Loader from "../components/Loader";
+import axios from "axios";
+import { loadStripe } from "@stripe/stripe-js";
+import { toast } from "react-toastify";
 import {
   useGetOrderDetailsQuery,
   usePayOrderMutation,
+  useTestPayOrderMutation,
 } from "../slices/ordersApiSlice";
-import { toast } from "react-toastify";
-import { loadStripe } from "@stripe/stripe-js";
-import axios from "axios";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { ordersApiSlice } from "../slices/ordersApiSlice";
+import Message from "../components/Message";
+import Loader from "../components/Loader";
 
 const stripePromise = loadStripe(
   "pk_test_51P4y50HPVRJk3r2Z56KHWCHxE7Lemxti5iCVU45JnJRPtINoB5LT4hdHrSSavuijoviMigfdpCztxyynxnAqhSua00xJq1Naxp"
@@ -29,6 +29,9 @@ function OrderScreen() {
   } = useGetOrderDetailsQuery(orderId);
 
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+
+  const [testPayOrder, { isLoading: loadingTestPayment }] =
+    useTestPayOrderMutation();
 
   async function handlePayment() {
     try {
@@ -58,10 +61,6 @@ function OrderScreen() {
         if (order?.isPaid === false) {
           console.log(order?.isPaid);
           await payOrder(orderId);
-
-          dispatch(
-            ordersApiSlice.util.invalidateTags([{ type: "Order", id: orderId }])
-          );
 
           toast.success("Payment successful");
         }
@@ -183,10 +182,18 @@ function OrderScreen() {
               {/* PAY ORDER PLACEHOLDER */}
               {!order.isPaid && (
                 <ListGroup.Item>
-                  {loadingPay && <Loader />}
+                  {(loadingPay || loadingTestPayment) && <Loader />}
 
                   <div>
-                    <Button type="button" className="btn btn-block">
+                    <Button
+                      onClick={() => {
+                        testPayOrder(orderId);
+
+                        toast.success("Test payment successful");
+                      }}
+                      type="button"
+                      className="btn btn-block"
+                    >
                       Test Pay Order
                     </Button>
 

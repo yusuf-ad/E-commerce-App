@@ -6,6 +6,7 @@ import {
   getOrders,
   updateOrderToDelivered,
   updateOrderToPaid,
+  testPayOrder,
   getCheckoutSession,
   checkPaymentSession,
 } from "../controllers/orderController.js";
@@ -17,6 +18,8 @@ const router = express.Router();
 router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);
 
 router.route("/myorders").get(protect, getMyOrders);
+
+router.put("/test-pay-order/:id", protect, testPayOrder);
 
 router.get("/create-checkout-session/:id", protect, getCheckoutSession);
 
