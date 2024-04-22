@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { ordersApiSlice } from "../slices/ordersApiSlice";
 
 const stripePromise = loadStripe(
   "pk_test_51P4y50HPVRJk3r2Z56KHWCHxE7Lemxti5iCVU45JnJRPtINoB5LT4hdHrSSavuijoviMigfdpCztxyynxnAqhSua00xJq1Naxp"
@@ -17,6 +19,7 @@ const stripePromise = loadStripe(
 
 function OrderScreen() {
   const { id: orderId } = useParams();
+  const dispatch = useDispatch();
 
   const {
     data: order,
@@ -48,20 +51,30 @@ function OrderScreen() {
   }
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
+    const payOrderAndUpdate = async () => {
+      const queryParams = new URLSearchParams(window.location.search);
 
-    if (queryParams.get("success") === "true" && order?.isPaid === "true") {
-      console.log(order?.isPaid);
-      payOrder(orderId);
+      if (queryParams.get("success") === "true") {
+        if (order?.isPaid === false) {
+          console.log(order?.isPaid);
+          await payOrder(orderId);
 
-      toast.success("Payment successful");
-    } else if (
-      queryParams.get("canceled") === "true" &&
-      order?.isPaid !== true
-    ) {
-      toast.error("Payment canceled");
-    }
-  }, [orderId, payOrder, order?.isPaid]);
+          dispatch(
+            ordersApiSlice.util.invalidateTags([{ type: "Order", id: orderId }])
+          );
+
+          toast.success("Payment successful");
+        }
+      } else if (
+        queryParams.get("canceled") === "true" &&
+        order?.isPaid !== true
+      ) {
+        toast.error("Payment canceled");
+      }
+    };
+
+    payOrderAndUpdate();
+  }, [order?.isPaid, orderId, payOrder, dispatch]);
 
   return isLoading ? (
     <Loader />
@@ -104,7 +117,9 @@ function OrderScreen() {
                 <strong>Method:</strong>
                 {order.paymentMethod}
               </p>
-              {order.isPaid ? (
+              {loadingPay ? (
+                <Loader />
+              ) : order.isPaid ? (
                 <Message variant="success">Paid on {order.paidAt}</Message>
               ) : (
                 <Message variant="danger">Not Paid</Message>

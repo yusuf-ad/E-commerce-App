@@ -31,7 +31,6 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: {},
       }),
-      invalidatesTags: [{ type: "Order", id: "LIST" }],
     }),
     updateOrder: builder.mutation({
       query: ({ orderId, order }) => ({

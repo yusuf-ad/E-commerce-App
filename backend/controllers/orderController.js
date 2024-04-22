@@ -95,8 +95,8 @@ export const getCheckoutSession = asyncHandler(async (req, res) => {
     customer_email: req.user.email,
 
     client_reference_id: req.params.id,
-    success_url: `${process.env.API_URL}/order/${order._id}/?success=true`,
-    cancel_url: `${process.env.API_URL}/order/${order._id}/?canceled=true`,
+    success_url: `${process.env.CLIENT_URL}/order/${order._id}/?success=true`,
+    cancel_url: `${process.env.CLIENT_URL}/order/${order._id}/?canceled=true`,
 
     mode: "payment",
   });
