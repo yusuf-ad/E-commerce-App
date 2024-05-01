@@ -11,9 +11,8 @@ import {
   useUploadProductImageMutation,
 } from "../../slices/productsApiSlice";
 
-function ProductEditScreen() {
+const ProductEditScreen = () => {
   const { id: productId } = useParams();
-  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0);
@@ -36,7 +35,9 @@ function ProductEditScreen() {
   const [uploadProductImage, { isLoading: loadingUpload }] =
     useUploadProductImageMutation();
 
-  async function submitHandler(e) {
+  const navigate = useNavigate();
+
+  const submitHandler = async (e) => {
     e.preventDefault();
     try {
       await updateProduct({
@@ -55,20 +56,7 @@ function ProductEditScreen() {
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
-  }
-
-  async function uploadFileHandler(e) {
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const { data } = await uploadProductImage(formData).unwrap();
-      setImage(data.image);
-    } catch (err) {
-      toast.error(err?.data?.message || err.error);
-    }
-  }
+  };
 
   useEffect(() => {
     if (product) {
@@ -81,6 +69,18 @@ function ProductEditScreen() {
       setDescription(product.description);
     }
   }, [product]);
+
+  const uploadFileHandler = async (e) => {
+    const formData = new FormData();
+    formData.append("image", e.target.files[0]);
+    try {
+      const res = await uploadProductImage(formData).unwrap();
+      toast.success(res.message);
+      setImage(res.image);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
 
   return (
     <>
@@ -125,10 +125,11 @@ function ProductEditScreen() {
                 onChange={(e) => setImage(e.target.value)}
               ></Form.Control>
               <Form.Control
-                onChange={uploadFileHandler}
                 label="Choose File"
+                onChange={uploadFileHandler}
                 type="file"
               ></Form.Control>
+              {loadingUpload && <Loader />}
             </Form.Group>
 
             <Form.Group controlId="brand">
@@ -183,6 +184,6 @@ function ProductEditScreen() {
       </FormContainer>
     </>
   );
-}
+};
 
 export default ProductEditScreen;
