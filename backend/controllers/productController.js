@@ -4,10 +4,22 @@ import Product from "../models/productModel.js";
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
-export const getAllProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find();
 
-  res.status(200).json(products);
+export const getAllProducts = asyncHandler(async (req, res) => {
+  const pageSize = 2;
+  const page = Number(req.query.pageNumber) || 1;
+  // you get total number of products
+  const count = await Product.countDocuments();
+
+  const products = await Product.find()
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  res.status(200).json({
+    products,
+    page,
+    pages: Math.ceil(count / pageSize),
+  });
 });
 
 // @desc   Fetch single product
