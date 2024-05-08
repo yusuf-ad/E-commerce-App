@@ -6,12 +6,25 @@ import Product from "../models/productModel.js";
 // @access  Public
 
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const pageSize = 2;
+  // search
+  const keyword = req.query.keyword
+    ? {
+        name: {
+          $regex: req.query.keyword,
+          $options: "i",
+        },
+      }
+    : {};
+
+  console.log(keyword);
+
+  // pagination
+  const pageSize = 6;
   const page = Number(req.query.pageNumber) || 1;
   // you get total number of products
-  const count = await Product.countDocuments();
+  const count = await Product.countDocuments({ ...keyword });
 
-  const products = await Product.find()
+  const products = await Product.find({ ...keyword })
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 

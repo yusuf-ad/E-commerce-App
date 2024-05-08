@@ -2,7 +2,7 @@ import { Pagination } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
 function Paginate({ pages, page, isAdmin = false, keyword = "" }) {
-  console.log([...Array(pages).keys()]);
+  console.log(keyword);
 
   return (
     pages > 1 && (
