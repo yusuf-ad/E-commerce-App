@@ -1,11 +1,17 @@
+// External libraries
 import { Row, Col } from "react-bootstrap";
+import { Link, useParams } from "react-router-dom";
+
+// Internal components
 import Product from "../components/Product";
-import { useGetProductsQuery } from "../slices/productsApiSlice";
 import Loader from "../components/Loader";
 import Message from "../components/Message";
-import { Link, useParams } from "react-router-dom";
 import Paginate from "../components/Paginate";
 import ProductCarousel from "../components/ProductsCarousel";
+
+// Internal slices/hooks
+import { useGetProductsQuery } from "../slices/productsApiSlice";
+import Meta from "../components/Meta";
 
 function HomeScreen() {
   const { pageNumber, keyword } = useParams();
@@ -34,6 +40,7 @@ function HomeScreen() {
         </Message>
       ) : (
         <div>
+          <Meta />
           <h1>Latest Products</h1>
           <Row>
             {products.map((product) => (

@@ -19,7 +19,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   console.log(keyword);
 
   // pagination
-  const pageSize = 6;
+  const pageSize = 3;
   const page = Number(req.query.pageNumber) || 1;
   // you get total number of products
   const count = await Product.countDocuments({ ...keyword });
