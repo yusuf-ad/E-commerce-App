@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { useLogoutMutation } from "../slices/usersApiSlice";
 import { logout } from "../slices/authSlice";
 import SearchBox from "./SearchBox";
+import { resetCart } from "../slices/cartSlice";
 
 function Header() {
   const { cartItems } = useSelector((state) => state.cart);
@@ -21,6 +22,8 @@ function Header() {
       await logoutApiCall().unwrap();
 
       dispatch(logout());
+
+      dispatch(resetCart());
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     }
